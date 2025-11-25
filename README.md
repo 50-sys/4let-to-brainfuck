@@ -10,14 +10,14 @@ This is a simple converter/compiler program that converts a program written with
     filename: file to be compiled
 
 ## The Combinations (C: capitilized letter, U: uncapitilized letter, F: first letter of the word):
-**FCCC**: >   
-**FCCU**: <   
-**FCUU**: +   
-**FCUC**: -    
-**FUCC**: .   
-**FUCU**: ,   
-**FUUC**: [   
-**FUUU**: ]    
+>**FCCC**: >   
+>**FCCU**: <   
+>**FCUU**: +   
+>**FCUC**: -    
+>**FUCC**: .   
+>**FUCU**: ,   
+>**FUUC**: [   
+>**FUUU**: ]    
 
 ## Stating The Word in The Source File
 > At the beginning of the file:
