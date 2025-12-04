@@ -34,3 +34,7 @@ This is a simple converter/compiler program that converts a program written with
 
 ## Installation
     make install
+
+## Known Bugs
+- In let-to-brainfuck converter, printing a two digit column number puts a random character on front (the issue is probably more general).
+- Gcc options are passed as one argument in the argument list when calling gcc, so it might recognize them all as values for the first option in the string.

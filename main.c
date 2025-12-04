@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 #include <sys/wait.h>
 
 #include <errno.h>
@@ -195,6 +196,59 @@ err:
 	return (Options) {};
 }
 
+void revstr(char* s) {
+
+    int l = 0;
+    int r = strlen(s) - 1;
+    char t;
+
+    while (l < r) {
+
+        t = s[l];
+        s[l] = s[r];
+        s[r] = t;
+
+        l++;
+        r--;
+    }
+}
+
+typedef struct{
+	char *string;
+} Digits; 
+
+Digits convert_number_to_word(int number, char *word, int base){
+
+#define GET_LETTER(N, W) W[N]
+
+	int mod;
+	char c;
+	int i;
+
+	for (i = 1;	pow(base, i) < number; i++);
+
+	Digits digits;
+	digits.string = malloc(sizeof(char)*(i + 1));
+
+	if (number == 0){
+		digits.string[0] = GET_LETTER(0, word);
+		digits.string[1] = '\0';
+	}
+	else{
+		for (i = 0; number != 0 ; i++){
+			mod = number % base;
+			number = (int) (number / base);
+			c = GET_LETTER(mod, word);
+			digits.string[i] = c;
+		}
+		digits.string[i+1] = '\0';
+	}
+
+	revstr(digits.string);
+	return digits;
+
+}
+
 void copy_whole_line(char *line_start, char **target){
 	char c;
 	int i;
@@ -276,7 +330,7 @@ int determine_token_type(char* token, char* word){
 	return -1;
 }
 
-void parse_file(char *buffer, int size, char *word, FILE *file, int close_file){
+void parse_file(char *buffer, int size, char *word, FILE *file, int close_file, int convert){
 	int i = 0;
 
 	char c;
@@ -422,42 +476,45 @@ void parse_file(char *buffer, int size, char *word, FILE *file, int close_file){
 		fclose(file);
 	return;
 
+// number word flag
+#define CONVERT_NUMBER(N,W,F) ((F != 1 || W == NULL) ? convert_number_to_word(N, "0123456789", 10).string : convert_number_to_word(N, W, 4).string)
+
 err: 
 	switch (errn){
 		case ERR_UNEXPECTED_EOF:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nUnexpected EOF before buffer ended.", line, linen, col);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nUnexpected EOF before buffer ended.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert));
 			exit(1);
 			break;
 		case ERR_EXPECTED_ASSIGN_AFTER_NAME: 
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nExpected assignment (=) after name token.", line, linen, col);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nExpected assignment (=) after name token.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert));
 			exit(1);
 			break;
 		case ERR_EXPECTED_QUOTES_BEFORE_RVALUE:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nExpected rvalue in quotes.", line, linen, col);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nExpected rvalue in quotes.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert));	
 			exit(1);
 			break;
 		case ERR_UNTERMINATED_RVALUE:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nUnterminated rvalue.", line, linen, col);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nUnterminated rvalue.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert));			exit(1);
 			exit(1);
 			break;
 		case ERR_RVALUE_TOO_LONG:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nRvalue too long.", line, linen, col);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nRvalue too long.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert));	
 			exit(1);
 			break;
 		case ERR_NO_WORD_SPECIFIED:
-			fprintf(stderr, "No word specified neither in the options nor the file.");
+			fprintf(stderr, "No word specified neither in the options nor the file.\n");
 			exit(1);
 			break;
 		case ERR_INVALID_TOKEN:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nInvalid token beginning with '%s...'.", line, linen, col, errs);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nInvalid token beginning with '%s...'.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert), errs);
 			exit(1);
 			break;
 		case ERR_INCOMPLETE_TOKEN:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nIncomplete token beginning with '%s...'.", line, linen, col, errs);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nIncomplete token beginning with '%s...'.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert), errs);
 			exit(1);
 			break;
 		case ERR_INVALID_WORD:
-			fprintf(stderr, "In line: '%s', line: %d, col: %d.\nInvalid word: '%s...'.", line, linen, col, errs);
+			fprintf(stderr, "In line: '%s', line: %s, col: %s.\nInvalid word: '%s...'.\n", line, CONVERT_NUMBER(linen, word, convert), CONVERT_NUMBER(col, word, convert), errs);
 			exit(1);
 			break;
 
@@ -697,7 +754,7 @@ main(int argc, char** argv){
 		errs = options.input;
 		goto err;
 	}
-	parse_file(buffer, fsize, options.word, file, 0);
+	parse_file(buffer, fsize, options.word, file, 0, options.convert_lines);
 
 	if (options.till_code == BRAINFUCK) return 0;
 
