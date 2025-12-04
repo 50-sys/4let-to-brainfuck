@@ -66,6 +66,38 @@ Arguments:\n\
 	 ");
 }
 
+char convert_turkish_let(int c){
+	if (c == 'ü')
+		return 'u';
+	if (c == 'Ü')
+		return 'U';
+	else if (c == 'Ğ')
+		return 'G';
+	else if (c == 'Ç')
+		return 'C';
+	else if (c == 'İ')
+		return 'I';
+	else if (c == 'Ö')
+		return 'O';
+	else if (c == 'Ş')
+		return 'S';
+	else if (c == 'ğ')
+		return 'g';
+	else if (c == 'ç')
+		return 'c';
+	else if (c == 'ı')
+		return 'i';
+	else if (c == 'İ')
+		return 'i';
+	else if (c == 'ö')
+		return 'o';
+	else if (c == 'ş')
+		return 's';
+
+	return c;
+
+}
+
 Options parse_args(int argc, char** argv){
 
 	int arg_count = 0;
@@ -688,7 +720,7 @@ main(int argc, char** argv){
 
 	Options options = parse_args(argc, argv);
 	
-	FILE *file = fopen(options.input, "r");
+	FILE *file = fopen(options.input, "rb");
 	if (file == NULL){
 		errn = ERR_COULD_NOT_OPEN_FILE;
 		errs = options.input;
@@ -705,17 +737,50 @@ main(int argc, char** argv){
 
 	fsize--;
 	
-	char *buffer = malloc((fsize + 1)*sizeof(char));
+	char *buffer = malloc((fsize + 1)*sizeof(char)); // ineffective way of handling two byte characters
 	if (buffer == NULL){
 		errn = ERR_COULD_NOT_ALL_MEMORY;
 		goto err;
 	}
 
-	char c;
-	int i = 0;
-	while ((c = fgetc(file)) != EOF)
-		buffer[i++] = c;
-	buffer[i] = '\0';
+	int c;
+	int j = 0;
+	int b;
+	while ((c = fgetc(file)) != EOF){
+		c = (unsigned char) c;
+		printf("single byte: %d\n", c);
+		if (c >= 128){
+			if (c > 224){
+				b = c << 8;
+				b |= (unsigned char) fgetc(file);
+				b <<= 8;
+				b |= (unsigned char) fgetc(file);
+				printf("multi byte: %c", b);
+				buffer[j++] = (unsigned char) convert_turkish_let(b);
+				continue;
+				if (c > 240){
+					b = c << 8;
+					b |= (unsigned char) fgetc(file);
+					b <<= 8;
+					b |= (unsigned char) fgetc(file);
+					b <<= 8;
+					b |= (unsigned char) fgetc(file);
+					printf("multi byte: %c", b);
+					buffer[j++] = (unsigned char) convert_turkish_let(b);
+					continue;
+				}
+			}
+
+			b = c << 8;
+			b |= (unsigned char) fgetc(file);
+			printf("multi byte: %c", b);
+			buffer[j++] = (unsigned char) convert_turkish_let(b);
+			continue;
+		}
+		buffer[j++] = (char) c;
+	}
+	buffer[j] = '\0';
+	printf("%s\n", buffer);
 
 	fclose(file);
 
@@ -754,7 +819,7 @@ main(int argc, char** argv){
 		errs = options.input;
 		goto err;
 	}
-	parse_file(buffer, fsize, options.word, file, 0, options.convert_lines);
+	parse_file(buffer, strlen(buffer) - 1, options.word, file, 0, options.convert_lines);
 
 	if (options.till_code == BRAINFUCK) return 0;
 
