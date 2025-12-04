@@ -754,6 +754,8 @@ main(int argc, char** argv){
 	else{
 		if (options.gcc_options != NULL)
 			output = options.gcc_options;
+		else
+			output = NULL;
 	}
 	char *const argsc[] = {"gcc", filename, output, options.gcc_options, (char *) NULL};
 
