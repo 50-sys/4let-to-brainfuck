@@ -748,14 +748,12 @@ main(int argc, char** argv){
 	int b;
 	while ((c = fgetc(file)) != EOF){
 		c = (unsigned char) c;
-		printf("single byte: %d\n", c);
 		if (c >= 128){
 			if (c > 224){
 				b = c << 8;
 				b |= (unsigned char) fgetc(file);
 				b <<= 8;
 				b |= (unsigned char) fgetc(file);
-				printf("multi byte: %c", b);
 				buffer[j++] = (unsigned char) convert_turkish_let(b);
 				continue;
 				if (c > 240){
@@ -765,7 +763,6 @@ main(int argc, char** argv){
 					b |= (unsigned char) fgetc(file);
 					b <<= 8;
 					b |= (unsigned char) fgetc(file);
-					printf("multi byte: %c", b);
 					buffer[j++] = (unsigned char) convert_turkish_let(b);
 					continue;
 				}
@@ -773,14 +770,12 @@ main(int argc, char** argv){
 
 			b = c << 8;
 			b |= (unsigned char) fgetc(file);
-			printf("multi byte: %c", b);
 			buffer[j++] = (unsigned char) convert_turkish_let(b);
 			continue;
 		}
 		buffer[j++] = (char) c;
 	}
 	buffer[j] = '\0';
-	printf("%s\n", buffer);
 
 	fclose(file);
 
@@ -844,7 +839,6 @@ main(int argc, char** argv){
 			errs = "bftoc.py";
 			strcat(errs, " ");
 			strcat(errs, filename);
-			printf("err: %d\n", errno);
 			goto err;
         }
     }
@@ -894,7 +888,6 @@ main(int argc, char** argv){
 			errs = "gcc";
 			strcat(errs, " ");
 			strcat(errs, filename);
-			printf("err: %d\n", errno);
 			goto err;
         }
     }
